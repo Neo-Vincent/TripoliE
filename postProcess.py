@@ -128,15 +128,15 @@ class TripoliPost(BaseTripoli):
         table+='volume\tnumber\t'
         table+='%d\t'*rows%tuple(volume)+'\n'
         table+='volume\t cm3\t'
-        table+='%f\t'*rows%tuple([self.realVol[vol] for vol in volume])+'\n\n'
+        table+='%E\t'*rows%tuple([self.realVol[vol] for vol in volume])+'\n\n'
         for reaction in self.reaction:
             table+='reation '+str(reaction)
             for isotope in self.isotopes:
-                table+='\t'+isotope+'\t'+'%f\t'*rows%tuple([self.score[vol][reaction][isotope] for vol in volume])+'\n'
+                table+='\t'+isotope+'\t'+'%E\t'*rows%tuple([self.score[vol][reaction][isotope] for vol in volume])+'\n'
         table+='\ncomcentration'
         for isotope in self.isotopes:
-            table+='\t'+isotope+'\t'+'%f\t'*rows%tuple(self.concentration[vol][isotope] for vol in volume)+'\n'
-        table+='\nLocalBU\tMWd/U\t'+'%f\t'*rows%tuple([self.localBu[vol] for vol in volume])+'\n\n\n\n'
+            table+='\t'+isotope+'\t'+'%E\t'*rows%tuple(self.concentration[vol][isotope] for vol in volume)+'\n'
+        table+='\nLocalBU\tMWd/U\t'+'%E\t'*rows%tuple([self.localBu[vol] for vol in volume])+'\n\n\n\n'
         return table_title+table
             
 
