@@ -68,7 +68,11 @@ class BaseTripoli(object):
             #content for lastest batch
             pattern1=r'(RESULTS ARE GIVEN FOR SOURCE INTENSITY[\W\w]+?simulation time)'
             content1=re.findall(pattern1,content)[-1]
-            
+            #read k##
+            try:
+                self.k=re.findall(r'number of batch used:\s\d+\s+keff\s=\s(\d+.?\d+[eE][-/+]\d+)\s+sigma\s=\s(\d+.?\d+[e,E][-,/+]\d+)',content1)[0][0]
+            except IndexError:
+                pass
             #block
             mod=r'(RESPONSE FUNCTION : REACTION\s+[\w\W]+?number of batches used:\s\d+\s\d\.\d+e[\-\+]\d+\s\d\.\d+e[\-\+]\d+)\s+'
             block=re.findall(mod,content1)
