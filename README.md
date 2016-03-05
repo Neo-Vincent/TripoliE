@@ -1,6 +1,6 @@
 # TripoliE
 This is a project for post-processing of Tripoli-4 result file.
-It containts 5 module:
+It containts 5 modules:
 * BaseTripoli
 * atom_mass
 * postProcess
