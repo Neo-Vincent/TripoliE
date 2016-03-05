@@ -133,7 +133,7 @@ class TripoliPost(BaseTripoli):
             table+='reation '+str(reaction)
             for isotope in self.isotopes:
                 table+='\t'+isotope+'\t'+'%E\t'*rows%tuple([self.score[vol][reaction][isotope] for vol in volume])+'\n'
-        table+='\ncomcentration'
+        table+='\nconcentration'
         for isotope in self.isotopes:
             table+='\t'+isotope+'\t'+'%E\t'*rows%tuple(self.concentration[vol][isotope] for vol in volume)+'\n'
         table+='\nLocalBU\tMWd/U\t'+'%E\t'*rows%tuple([self.localBu[vol] for vol in volume])+'\n\n\n\n'

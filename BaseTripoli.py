@@ -5,6 +5,8 @@ from __future__ import print_function
 import re
 import time
 
+from atom_mass import atom_mass
+
 class BaseTripoli(object):
     def __init__(self,postFile=None):
         #科学计数法
@@ -14,7 +16,7 @@ class BaseTripoli(object):
         #本程序的日志文件
         self._log=(self._postFile or 'Myproject')+'.log'
         #出现错误休眠时间
-        self._dt=3
+        self._dt=100
     
     def _rmComment(self,content):
         #去除Tripoli的注释
@@ -113,6 +115,7 @@ class BaseTripoli(object):
             return self.max_sigma
         Sigma={dd['sigma'] for dd in d_l}
         self._dl=d_l
+        Sigma.add(0)
         self.max_sigma=max(Sigma)
         self._V_R()
         return self.max_sigma
@@ -121,7 +124,6 @@ class BaseTripoli(object):
         #parsing the input infomation
         #creat the attribute self.comps which store the all compostions in a list
         #self.geoCom store the geoCom info
-
         if not hasattr(self,'_input'):
             self.maketable()
         #get the relation between compositions and volums
@@ -137,7 +139,14 @@ class BaseTripoli(object):
             theGeo['num']=int(nums[0])
             theGeo['volume']=int(nums[1]) # there is only one volume
             self.geoCom.append(theGeo)
-
+            
+        self._getCompositionSection()
+        self._reformatGeoComps()
+        self._getFuelVol()
+        self._getRealVol()
+        self._getBoronConcentration()
+        
+    def _getCompositionSection(self):
         #获取composition部分
         #get composition section
         comps_pattern=r'COMPOSITION\s+\d+\s+([\w\W]+?)END_COMPOSITION'
@@ -159,7 +168,8 @@ class BaseTripoli(object):
             for j in self._comps:
                 if self.geoCom[i]['name']==j['name']:
                     self.geoCom[i].update(j)
-
+    
+    def _reformatGeoComps(self):
         #reformat the geo_comps in the format self.concentration[vol][isotope]=concentration
         self.concentration={}
         for i in self.geoCom:
@@ -179,10 +189,11 @@ class BaseTripoli(object):
                 if i['name']==mat:
                     self._mat_vol[mat]=i['volume']
                     self._mat_vol[i['volume']]=mat
-
+    def _getFuelVol(self):
         #自动分析成分，获取燃料的体积
         self._comV={self._mat_vol[i['name']]  for i in self._comps\
                     if ('U235' in i or 'U238' in i  or 'PU239' in i) }
+    def _getRealVol(self):
         #get the real volume in cm3
         #获取体积的真实体积大小
         real_V_pattern=r'VOLSURF([\w\W]+?)END_VOLSURF'
@@ -198,4 +209,67 @@ class BaseTripoli(object):
                 "Entre any key to exit!!\n"
             print(msg)
             self.writeLog(msg)
-            exit(0)
+            #exit(0)
+    def _getBoronConcentration(self):
+        #计算硼浓度
+        #compute the boron concentration
+        
+        mass=atom_mass()
+        self.water=[]
+        self.fuel=[]
+        self.uranium_concentration=[]
+        self.boron_concentration=[]
+        for composition in self.geoCom:
+            keys=composition.keys()
+            
+            ## boron section ########
+            B_key=("B-NAT" in keys and "B_NAT") or \
+            ("B10" in keys and  "B10")or \
+            ("B11" in keys and "B11")
+            B=["B10","B11","B-NAT","b10","b11","b-nat","b-NAT"]
+            if B_key:
+                h1_key=("H1" in keys and "H1") or \
+                ("H_H2O" in keys and "H_H2O") or \
+                ("H-NAT" in keys and "H-NAT")
+                O_key=("O16" in keys and "O16") or \
+                ("O-NAT" in keys and "O-NAT") 
+                try:
+                    H=composition[h1_key]
+                    O=composition[O_key]
+                except KeyError:
+                    continue
+                if abs(H/2-O)<1e-6:
+                    water=["H1","O-NAT","H-NAT","O16"]
+                    #### this is water ###
+                    totalmass=0.0
+                    ### water density ####
+                    density=0.0  #unit kg/m3
+                    for i in water:
+                        try:
+                            totalmass+=composition[i]*mass[i]
+                            density+=mass.getKg(i)*1e30*composition[i]
+                        except KeyError:
+                            continue
+                    composition["density"]=density
+                    self.water.append(composition)
+                    #### boron concentration###
+                    boron=0.0
+                    for b in B:
+                        try:
+                            boron+=composition[b]*mass[b]
+                        except KeyError:
+                            pass
+                    cb=boron/totalmass*1e6 
+                    self.boron_concentration.append(cb)
+            ##### fuel section#####
+            if "U235" in keys:
+                self.fuel.append(composition)
+                O=0.0
+                for i in ["O-NAT","O16"]:
+                    try:
+                        O+=composition[i]
+                    except KeyError:
+                        continue
+                cu=2*composition["U235"]/O*100
+                self.uranium_concentration.append(cu)
+        #return cb,cu

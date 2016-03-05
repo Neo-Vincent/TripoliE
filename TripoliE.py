@@ -41,6 +41,12 @@ class TripoliE(BaseTripoli):
         self.setDensity(density)
         self.setMaxSigma(maxSigma)
 
+        
+    def maketable(self,filename=None):
+        self.readConfig()
+        super(TripoliE,self).maketale(filename)
+        
+
             
 
 
