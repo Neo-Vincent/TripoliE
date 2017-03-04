@@ -13,7 +13,7 @@ It is used to parse the tripoli result file, and get the input information.
 Now, it can almost get all infor from Tripoli Result file.
 
 ### Example
-```
+```python
 >> a=BaseTripoli("MOX_L_T4.tri.txt")
 >> a.maketable()
 >> a.parsing_input()
@@ -80,7 +80,7 @@ a 5-level dict: all info in this obj
 ## atom_mass
 a module for getting the atom mass
 ### Example
-```
+```python
 >> a=atom_mass()
 >> a["H"]
 1.00794075382579     the nautral atom mass
